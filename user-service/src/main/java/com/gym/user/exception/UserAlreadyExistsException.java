@@ -1,4 +1,8 @@
 package com.gym.user.exception;
 
-public class UserAlreadyExistsException {
+public class UserAlreadyExistsException extends RuntimeException {
+
+    public UserAlreadyExistsException(String message) {
+        super(message);
+    }
 }

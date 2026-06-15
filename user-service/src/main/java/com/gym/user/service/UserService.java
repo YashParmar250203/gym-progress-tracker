@@ -1,12 +1,17 @@
 package com.gym.user.service;
 
+import com.gym.user.dto.LoginRequestDto;
+import com.gym.user.dto.LoginResponseDto;
 import com.gym.user.dto.RegisterRequestDto;
 import com.gym.user.dto.RegisterResponseDto;
 import com.gym.user.entity.User;
+import com.gym.user.exception.InvalidCredentialsException;
+import com.gym.user.exception.UserAlreadyExistsException;
+import com.gym.user.exception.UserNotFoundException;
 import com.gym.user.repository.UserRepository;
+import com.gym.user.security.JwtService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -17,43 +22,59 @@ public class UserService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    public RegisterResponseDto registerUser(RegisterRequestDto requestDto){
-        try {
-            RegisterResponseDto responseDto = new RegisterResponseDto();
-            if(userExistsByEmail(requestDto.getEmail())){
-                responseDto.setMessage("Email already registered!");
-                return responseDto;
-            }
+    @Autowired
+    private JwtService jwtService;
 
-            User user  = toEntity(requestDto);
-            userRepository.save(user);
-            responseDto.setMessage("Email registered successfully!");
-            return responseDto;
-        }catch (Exception e){
-            throw new RuntimeException("Something went wrong while registering user! " + e);
+    public RegisterResponseDto registerUser(RegisterRequestDto requestDto) {
+
+        if (userExistsByEmail(requestDto.getEmail())) {
+            throw new UserAlreadyExistsException(
+                    "Email already registered."
+            );
         }
+
+        RegisterResponseDto responseDto = new RegisterResponseDto();
+        User user = toEntity(requestDto);
+        userRepository.save(user);
+        responseDto.setMessage("Email registered successfully!");
+        return responseDto;
+
     }
 
     private User toEntity(RegisterRequestDto requestDto) {
-        try{
-            User user = new User();
-            user.setEmail(requestDto.getEmail());
-            user.setPassword(passwordEncoder.encode(requestDto.getPassword()));
-            user.setFullName(requestDto.getFullName());
-            user.setHeight(requestDto.getHeight());
-            user.setWeight(requestDto.getWeight());
-            user.setDateOfBirth(requestDto.getDateOfBirth());
-            user.setFitnessGoal(requestDto.getFitnessGoal());
-            user.setGender(requestDto.getGender());
-            // role, createdAt, isActive are set automatically by default values in entity
 
-            return user;
-        }catch (Exception e){
-            throw new RuntimeException(e);
-        }
+        User user = new User();
+        user.setEmail(requestDto.getEmail());
+        user.setPassword(passwordEncoder.encode(requestDto.getPassword()));
+        user.setFullName(requestDto.getFullName());
+        user.setHeight(requestDto.getHeight());
+        user.setWeight(requestDto.getWeight());
+        user.setDateOfBirth(requestDto.getDateOfBirth());
+        user.setFitnessGoal(requestDto.getFitnessGoal());
+        user.setGender(requestDto.getGender());
+        // role, createdAt, isActive are set automatically by default values in entity
+
+        return user;
     }
 
-    public boolean userExistsByEmail(String email){
+    public boolean userExistsByEmail(String email) {
         return userRepository.existsByEmail(email);
+    }
+
+    public LoginResponseDto loginUser(LoginRequestDto requestDto) {
+        // 1. Find user by email
+        User user = userRepository.findByEmail(requestDto.getEmail())
+                .orElseThrow(() -> new UserNotFoundException(
+                        "User not found with email: " + requestDto.getEmail()
+                ));
+
+        // 2. Compare raw password with stored hashed password
+        if (!passwordEncoder.matches(requestDto.getPassword(), user.getPassword())) {
+            throw new InvalidCredentialsException("Invalid email or password");
+        }
+
+        String token = jwtService.generateToken(user.getEmail());
+
+        return new LoginResponseDto("Login successful", token);
     }
 }

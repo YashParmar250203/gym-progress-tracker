@@ -3,6 +3,7 @@ package com.gym.user.dto;
 import com.gym.user.enums.FitnessGoal;
 import com.gym.user.enums.Gender;
 import jakarta.validation.constraints.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -10,6 +11,7 @@ import java.time.LocalDate;
 
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
 public class RegisterRequestDto {
 
     @NotBlank
