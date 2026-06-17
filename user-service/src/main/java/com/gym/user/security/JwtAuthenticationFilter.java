@@ -51,6 +51,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             UserDetails userDetails = customUserDetailsService.loadUserByUsername(email);
 
             // Validate token
+            System.out.println("Token Valid = " +
+                    jwtService.validateToken(token, email));
             if (jwtService.validateToken(token, userDetails.getUsername())) {
 
                 // Create authentication object
@@ -61,6 +63,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 // Set this user as "logged in" for this request
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             }
+            System.out.println("Authentication Set Successfully");
         }
 
         // Continue to next filter/controller

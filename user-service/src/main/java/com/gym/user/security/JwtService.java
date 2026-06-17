@@ -36,6 +36,9 @@ public class JwtService {
 
     // 3. VALIDATE TOKEN
     public boolean validateToken(String token, String email) {
+        System.out.println("JWT Filter Called");
+        System.out.println("Token = " + token);
+        System.out.println("Email = " + email);
         String extractedEmail = extractUsername(token);
         boolean isEmailMatch = extractedEmail.equals(email);
         boolean isNotExpired = !isTokenExpired(token);

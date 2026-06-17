@@ -1,9 +1,6 @@
 package com.gym.user.service;
 
-import com.gym.user.dto.LoginRequestDto;
-import com.gym.user.dto.LoginResponseDto;
-import com.gym.user.dto.RegisterRequestDto;
-import com.gym.user.dto.RegisterResponseDto;
+import com.gym.user.dto.*;
 import com.gym.user.entity.User;
 import com.gym.user.exception.InvalidCredentialsException;
 import com.gym.user.exception.UserAlreadyExistsException;
@@ -14,6 +11,8 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
 
 @Service
 public class UserService {
@@ -57,6 +56,25 @@ public class UserService {
         return user;
     }
 
+    private UserResponseDto toDto(User user) {
+
+        UserResponseDto dto = new UserResponseDto();
+        dto.setUserId(user.getUserId());
+        dto.setEmail(user.getEmail());
+        dto.setFullName(user.getFullName());
+        dto.setHeight(user.getHeight());
+        dto.setWeight(user.getWeight());
+        dto.setDateOfBirth(user.getDateOfBirth());
+        dto.setFitnessGoal(user.getFitnessGoal());
+        dto.setGender(user.getGender());
+        dto.setRole(user.getRole());
+        dto.setCreatedAt(user.getCreatedAt());
+        dto.setIsActive(user.getIsActive());
+        // password intentionally skipped
+
+        return dto;
+    }
+
     public boolean userExistsByEmail(String email) {
         return userRepository.existsByEmail(email);
     }
@@ -76,5 +94,16 @@ public class UserService {
         String token = jwtService.generateToken(user.getEmail());
 
         return new LoginResponseDto("Login successful", token);
+    }
+
+    public UserResponseDto getCurrentUser(String token) {
+        String email = jwtService.extractUsername(token);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException(
+                        "User not found with email: " + email
+                ));
+
+        return toDto(user);
+
     }
 }
