@@ -3,13 +3,19 @@ package com.gym.workout.service;
 import com.gym.workout.dto.AddWorkoutRequestDto;
 import com.gym.workout.dto.AddWorkoutResponseDto;
 import com.gym.workout.dto.SetDto;
+import com.gym.workout.dto.WorkoutResponseDto;
 import com.gym.workout.entity.SetEntry;
 import com.gym.workout.entity.WorkoutEntry;
+import com.gym.workout.enums.Exercise;
+import com.gym.workout.exception.UnauthorizedAccessException;
+import com.gym.workout.exception.WorkoutNotFoundException;
 import com.gym.workout.repository.WorkoutRepository;
+import jakarta.validation.Valid;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,7 +35,7 @@ public class WorkoutService {
     ) {
 
         Optional<WorkoutEntry> existingWorkout =
-                workoutRepository.findByUserEmailAndExerciseNameAndWorkoutDate(
+                workoutRepository.findByUserEmailAndExerciseAndWorkoutDate(
                         userEmail,
                         requestDto.getExercise(),
                         requestDto.getWorkoutDate()
@@ -57,7 +63,7 @@ public class WorkoutService {
 
             return new AddWorkoutResponseDto(
                     "Workout updated successfully",
-                    workout.getExercise(),
+                    workout.getExercise().getDisplayName(),
                     workout.getWorkoutDate()
             );
         }
@@ -68,7 +74,7 @@ public class WorkoutService {
 
         return new AddWorkoutResponseDto(
                 "Workout added successfully",
-                workout.getExercise(),
+                workout.getExercise().getDisplayName(),
                 workout.getWorkoutDate()
         );
     }
@@ -98,5 +104,69 @@ public class WorkoutService {
         workout.setUpdatedAt(LocalDateTime.now());
 
         return workout;
+    }
+
+    public AddWorkoutResponseDto updateWorkout(AddWorkoutRequestDto requestDto, String id, String userEmail) {
+
+        WorkoutEntry oldEntry = workoutRepository.findById(id)
+                .orElseThrow(() -> new WorkoutNotFoundException("Workout not found!"));
+
+        if (!oldEntry.getUserEmail().equals(userEmail)) {
+            throw new UnauthorizedAccessException("You are not allowed to modify this workout.");
+        }
+
+        WorkoutEntry updatedWorkout = buildWorkoutEntry(requestDto, oldEntry.getUserEmail());
+        updatedWorkout.setUpdatedAt(LocalDateTime.now());
+        updatedWorkout.setCreatedAt(oldEntry.getCreatedAt());
+        updatedWorkout.setId(oldEntry.getId());
+        workoutRepository.save(updatedWorkout);
+
+        return new AddWorkoutResponseDto(
+                "Workout updated successfully.",
+                updatedWorkout.getExercise().getDisplayName(),
+                updatedWorkout.getWorkoutDate()
+        );
+    }
+
+    public void deleteWorkout(String id, String userEmail) {
+
+        WorkoutEntry workoutEntry = workoutRepository.findById(id)
+                .orElseThrow(() -> new WorkoutNotFoundException("Workout not found."));
+
+        if (!workoutEntry.getUserEmail().equals(userEmail)) {
+            throw new UnauthorizedAccessException("You are not allowed to delete this workout.");
+        }
+
+        workoutRepository.deleteById(id);
+    }
+
+    // service
+    public List<WorkoutResponseDto> getWorkoutsByExercise(Exercise exercise, String email) {
+        List<WorkoutEntry> list = workoutRepository.findByUserEmailAndExercise(email, exercise);
+        return list.stream().map(this::toDto).toList();
+    }
+
+    private WorkoutResponseDto toDto(WorkoutEntry workoutEntry) {
+
+        WorkoutResponseDto dto = new WorkoutResponseDto();
+        dto.setId(workoutEntry.getId());
+        dto.setMuscleGroup(workoutEntry.getMuscleGroup());
+        dto.setExercise(workoutEntry.getExercise());
+        dto.setWorkoutDate(workoutEntry.getWorkoutDate());
+        dto.setCreatedAt(workoutEntry.getCreatedAt());
+        dto.setUpdatedAt(workoutEntry.getUpdatedAt());
+        dto.setSets(new ArrayList<>());
+
+        for(SetEntry setEntry : workoutEntry.getSets()){
+            dto.getSets().add(
+                    new SetDto(
+                            setEntry.getSetNumber(),
+                            setEntry.getWeight(),
+                            setEntry.getReps()
+                    )
+            );
+        }
+
+        return dto;
     }
 }

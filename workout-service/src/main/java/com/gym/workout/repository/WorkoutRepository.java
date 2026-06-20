@@ -21,12 +21,12 @@ public interface WorkoutRepository
             LocalDate workoutDate
     );
 
-    List<WorkoutEntry> findByUserEmailAndExerciseName(
+    List<WorkoutEntry> findByUserEmailAndExercise(
             String userEmail,
             Exercise exercise
     );
 
-    Optional<WorkoutEntry> findByUserEmailAndExerciseNameAndWorkoutDate(
+    Optional<WorkoutEntry> findByUserEmailAndExerciseAndWorkoutDate(
             String userEmail,
             Exercise exercise,
             LocalDate workoutDate

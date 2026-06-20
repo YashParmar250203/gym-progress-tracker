@@ -9,6 +9,7 @@ import java.util.List;
 
 @Service
 public class ExerciseService {
+
     public List<MuscleGroup> getAllMuscleGroups() {
         return Arrays.stream(MuscleGroup.values()).toList();
     }

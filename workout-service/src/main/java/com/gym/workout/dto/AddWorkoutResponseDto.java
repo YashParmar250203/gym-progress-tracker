@@ -14,7 +14,7 @@ public class AddWorkoutResponseDto {
 
     private String message;
 
-    private Exercise exercise;
+    private String exercise;
 
     private LocalDate workoutDate;
 }
