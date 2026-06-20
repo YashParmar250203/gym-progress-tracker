@@ -1,12 +1,8 @@
 package com.gym.user.controller;
 
-import com.gym.user.dto.RegisterRequestDto;
-import com.gym.user.dto.RegisterResponseDto;
 import com.gym.user.dto.UserResponseDto;
-import com.gym.user.entity.User;
 import com.gym.user.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;

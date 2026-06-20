@@ -1,0 +1,20 @@
+package com.gym.workout.dto;
+
+import com.gym.workout.enums.Exercise;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDate;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class AddWorkoutResponseDto {
+
+    private String message;
+
+    private Exercise exercise;
+
+    private LocalDate workoutDate;
+}
