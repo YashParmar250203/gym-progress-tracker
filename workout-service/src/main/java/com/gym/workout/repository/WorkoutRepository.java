@@ -11,10 +11,13 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface WorkoutRepository
-        extends MongoRepository<WorkoutEntry, String> {
+public interface WorkoutRepository extends MongoRepository<WorkoutEntry, String> {
 
     List<WorkoutEntry> findByUserEmail(String userEmail);
+
+    List<WorkoutEntry> findByUserEmailOrderByWorkoutDateDesc(
+            String userEmail
+    );
 
     List<WorkoutEntry> findByUserEmailAndWorkoutDate(
             String userEmail,
@@ -32,8 +35,10 @@ public interface WorkoutRepository
             LocalDate workoutDate
     );
 
-    List<WorkoutEntry> findByUserEmailAndMuscleGroup(
+    List<WorkoutEntry> findByUserEmailAndMuscleGroupOrderByWorkoutDateDesc(
             String userEmail,
             MuscleGroup muscleGroup
     );
+
+    Optional<WorkoutEntry> findByUserEmailAndId(String userEmail, String id);
 }

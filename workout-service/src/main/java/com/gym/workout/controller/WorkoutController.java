@@ -4,11 +4,11 @@ import com.gym.workout.dto.AddWorkoutRequestDto;
 import com.gym.workout.dto.AddWorkoutResponseDto;
 import com.gym.workout.dto.SingleMessageResponseDto;
 import com.gym.workout.dto.WorkoutResponseDto;
-import com.gym.workout.entity.WorkoutEntry;
 import com.gym.workout.enums.Exercise;
+import com.gym.workout.enums.MuscleGroup;
+import com.gym.workout.security.SecurityUtils;
 import com.gym.workout.service.WorkoutService;
 import jakarta.validation.Valid;
-import org.springframework.data.mongodb.core.aggregation.ArithmeticOperators;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,8 +21,11 @@ public class WorkoutController {
 
     private final WorkoutService workoutService;
 
-    public WorkoutController(WorkoutService workoutService) {
+    private final SecurityUtils securityUtils;
+
+    public WorkoutController(WorkoutService workoutService, SecurityUtils securityUtils) {
         this.workoutService = workoutService;
+        this.securityUtils = securityUtils;
     }
 
     @PostMapping
@@ -30,8 +33,8 @@ public class WorkoutController {
             @Valid @RequestBody AddWorkoutRequestDto requestDto
     ) {
 
-        // TODO: Replace with JWT extracted email
-        String userEmail = "john.doe@example.com";
+        String userEmail =
+                securityUtils.getCurrentUserEmail();
 
         AddWorkoutResponseDto response =
                 workoutService.saveWorkout(requestDto, userEmail);
@@ -41,38 +44,80 @@ public class WorkoutController {
                 .body(response);
     }
 
-    @PutMapping("/update/{id}")
+    @GetMapping("/{id}")
+    public ResponseEntity<WorkoutResponseDto> getWorkoutById(@PathVariable String id){
+        String userEmail =
+                securityUtils.getCurrentUserEmail();
+
+        WorkoutResponseDto responseDto = workoutService.getWorkoutById(userEmail, id);
+
+        return ResponseEntity.status(HttpStatus.OK).body(responseDto);
+    }
+
+    @PutMapping("/{id}")
     public ResponseEntity<AddWorkoutResponseDto> updateWorkout(
             @Valid @RequestBody AddWorkoutRequestDto requestDto, @PathVariable String id
     ) {
 
 
-        String email = "abc@gmail.com";
+        String userEmail =
+                securityUtils.getCurrentUserEmail();
         AddWorkoutResponseDto response =
-                workoutService.updateWorkout(requestDto, id, email);
+                workoutService.updateWorkout(requestDto, id, userEmail);
 
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(response);
     }
 
-    @DeleteMapping("/delete/{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<SingleMessageResponseDto> deleteWorkout(@PathVariable String id){
-        String email = "abc@gmail.com";
-        workoutService.deleteWorkout(id, email);
+        String userEmail =
+                securityUtils.getCurrentUserEmail();
+        workoutService.deleteWorkout(id, userEmail);
 
         SingleMessageResponseDto response = new SingleMessageResponseDto("Workout deleted successfully.");
         return ResponseEntity.status(HttpStatus.OK).body(response);
 
     }
 
-    @GetMapping("/{exercise}")
+    @GetMapping("/exercise/{exercise}")
     public ResponseEntity<List<WorkoutResponseDto>> getWorkoutsByExercise(@PathVariable Exercise exercise){
-        // TODO: Replace with JWT extracted email
-        String userEmail = "john.doe@example.com";
+        String userEmail =
+                securityUtils.getCurrentUserEmail();
 
         List<WorkoutResponseDto> responseList = workoutService.getWorkoutsByExercise(exercise, userEmail);
 
         return ResponseEntity.status(HttpStatus.OK).body(responseList);
+    }
+
+    @GetMapping("/history")
+    public ResponseEntity<List<WorkoutResponseDto>> getWorkoutHistory(){
+        String userEmail =
+                securityUtils.getCurrentUserEmail();
+
+        List<WorkoutResponseDto> responseDtoList = workoutService.getWorkoutHistory(userEmail);
+
+        return ResponseEntity.status(HttpStatus.OK).body(responseDtoList);
+    }
+
+    @GetMapping("/today")
+    public ResponseEntity<List<WorkoutResponseDto>> getTodayWorkout(){
+        String userEmail =
+                securityUtils.getCurrentUserEmail();
+
+        List<WorkoutResponseDto> responseDtoList = workoutService.getTodayWorkout(userEmail);
+
+        return ResponseEntity.status(HttpStatus.OK).body(responseDtoList);
+    }
+
+    @GetMapping("/muscle-group/{muscleGroup}")
+    public ResponseEntity<List<WorkoutResponseDto>> getMuscleGroupWorkouts(@PathVariable MuscleGroup muscleGroup){
+        String userEmail =
+                securityUtils.getCurrentUserEmail();
+
+        List<WorkoutResponseDto> responseDtoList = workoutService.getMuscleGroupWorkouts(userEmail, muscleGroup);
+
+        return ResponseEntity.status(HttpStatus.OK).body(responseDtoList);
     }
 }

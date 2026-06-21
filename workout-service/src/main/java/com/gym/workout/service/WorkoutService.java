@@ -7,13 +7,14 @@ import com.gym.workout.dto.WorkoutResponseDto;
 import com.gym.workout.entity.SetEntry;
 import com.gym.workout.entity.WorkoutEntry;
 import com.gym.workout.enums.Exercise;
+import com.gym.workout.enums.MuscleGroup;
 import com.gym.workout.exception.UnauthorizedAccessException;
 import com.gym.workout.exception.WorkoutNotFoundException;
 import com.gym.workout.repository.WorkoutRepository;
-import jakarta.validation.Valid;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -84,14 +85,16 @@ public class WorkoutService {
             String userEmail
     ) {
 
-        List<SetEntry> sets = requestDto.getSets()
-                .stream()
-                .map(dto -> new SetEntry(
-                        dto.getSetNumber(),
-                        dto.getWeight(),
-                        dto.getReps()
-                ))
-                .toList();
+        List<SetEntry> sets = new ArrayList<>(
+                requestDto.getSets()
+                        .stream()
+                        .map(dto -> new SetEntry(
+                                dto.getSetNumber(),
+                                dto.getWeight(),
+                                dto.getReps()
+                        ))
+                        .toList()
+        );
 
         WorkoutEntry workout = new WorkoutEntry();
 
@@ -168,5 +171,27 @@ public class WorkoutService {
         }
 
         return dto;
+    }
+
+    public List<WorkoutResponseDto> getWorkoutHistory(String userEmail) {
+        List<WorkoutEntry> list = workoutRepository.findByUserEmailOrderByWorkoutDateDesc(userEmail);
+        return list.stream().map(this::toDto).toList();
+    }
+
+    public List<WorkoutResponseDto> getTodayWorkout(String userEmail) {
+        List<WorkoutEntry> list = workoutRepository.findByUserEmailAndWorkoutDate(userEmail, LocalDate.now());
+        return list.stream().map(this::toDto).toList();
+    }
+
+    public WorkoutResponseDto getWorkoutById(String userEmail, String id) {
+        WorkoutEntry entry = workoutRepository.findByUserEmailAndId(userEmail, id)
+                .orElseThrow(() -> new WorkoutNotFoundException("Workout not found."));
+
+        return toDto(entry);
+    }
+
+    public List<WorkoutResponseDto> getMuscleGroupWorkouts(String userEmail, MuscleGroup muscleGroup) {
+        List<WorkoutEntry> workoutEntries = workoutRepository.findByUserEmailAndMuscleGroupOrderByWorkoutDateDesc(userEmail, muscleGroup);
+        return workoutEntries.stream().map(this::toDto).toList();
     }
 }
