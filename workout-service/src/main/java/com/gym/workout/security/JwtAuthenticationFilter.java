@@ -29,6 +29,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // Get the "Authorization" header
         String authHeader = request.getHeader("Authorization");
 
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            filterChain.doFilter(request, response);  // no token → just pass through
+            return;                                    // stop here, don't go further
+        }
+
+
         // Extract the actual token (remove "Bearer " prefix)
         String token = authHeader.substring(7);   // "Bearer eyJhbGci..." → "eyJhbGci..."
 

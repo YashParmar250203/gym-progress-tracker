@@ -2,8 +2,6 @@
 
 package com.gym.analytics.enums;
 
-import com.gym.workout.enums.MuscleGroup;
-
 public enum Exercise {
 
     // ───── CHEST ─────
