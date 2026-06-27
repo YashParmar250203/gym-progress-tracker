@@ -1,0 +1,419 @@
+.dashboard-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.dashboard-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.dashboard-header h1 {
+  font-size: clamp(1.5rem, 3vw, 1.875rem);
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.dashboard-header p {
+  color: var(--text-muted);
+  font-size: 0.9375rem;
+}
+
+.dashboard-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.625rem 1.125rem;
+  background: linear-gradient(135deg, var(--orange-500) 0%, var(--orange-600) 100%);
+  color: #0a0a0a;
+  font-size: 0.875rem;
+  font-weight: 700;
+  border-radius: 10px;
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(255, 107, 0, 0.25);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.dashboard-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(255, 107, 0, 0.35);
+  text-decoration: none;
+}
+
+/* Summary stats */
+.dashboard-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.dashboard-summary-card {
+  background: var(--charcoal-900);
+  border: 1px solid var(--charcoal-700);
+  border-radius: var(--radius);
+  padding: 1.125rem 1.25rem;
+}
+
+.dashboard-summary-card__label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin-bottom: 0.375rem;
+}
+
+.dashboard-summary-card__value {
+  font-size: 1.625rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.dashboard-summary-card__value--accent {
+  color: var(--orange-400);
+}
+
+/* Charts grid */
+.dashboard-charts {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+}
+
+.dashboard-chart-card {
+  background: var(--charcoal-900);
+  border: 1px solid var(--charcoal-700);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.dashboard-chart-card__header h2 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.dashboard-chart-card__header p {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.dashboard-chart-wrap {
+  width: 100%;
+  min-height: 280px;
+}
+
+.dashboard-chart-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  text-align: center;
+  padding: 1rem;
+}
+
+.chart-tooltip {
+  background: var(--charcoal-800);
+  border: 1px solid var(--charcoal-600);
+  border-radius: 8px;
+  padding: 0.625rem 0.875rem;
+}
+
+.chart-tooltip__name {
+  font-weight: 600;
+  font-size: 0.8125rem;
+  margin-bottom: 0.125rem;
+}
+
+.chart-tooltip__value {
+  font-size: 0.75rem;
+  color: var(--orange-300);
+}
+
+.chart-legend-label {
+  color: var(--charcoal-200) !important;
+  font-size: 0.75rem !important;
+}
+
+.chart-breakdown {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--charcoal-700);
+}
+
+.chart-breakdown li {
+  display: grid;
+  grid-template-columns: 8px 1fr auto;
+  align-items: center;
+  gap: 0.625rem;
+  font-size: 0.8125rem;
+}
+
+.chart-breakdown__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.chart-breakdown__name {
+  color: var(--charcoal-200);
+}
+
+.chart-breakdown__percent {
+  font-weight: 700;
+  color: var(--orange-400);
+}
+
+/* Recent workouts */
+.dashboard-recent {
+  background: var(--charcoal-900);
+  border: 1px solid var(--charcoal-700);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.dashboard-recent__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--charcoal-700);
+}
+
+.dashboard-recent__header h2 {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.dashboard-recent__header span {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.recent-workout-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.recent-workout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--charcoal-700);
+  transition: background 0.15s;
+}
+
+.recent-workout:last-child {
+  border-bottom: none;
+}
+
+.recent-workout:hover {
+  background: rgba(255, 107, 0, 0.04);
+}
+
+.recent-workout__main {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  min-width: 0;
+}
+
+.recent-workout__icon {
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 107, 0, 0.12);
+  border: 1px solid rgba(255, 107, 0, 0.25);
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.9375rem;
+  color: var(--orange-400);
+}
+
+.recent-workout__info {
+  min-width: 0;
+}
+
+.recent-workout__info h3 {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.recent-workout__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.recent-workout__badge {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 0.125rem 0.5rem;
+  background: var(--charcoal-800);
+  border: 1px solid var(--charcoal-600);
+  border-radius: 999px;
+  color: var(--orange-300);
+}
+
+.recent-workout__date {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.recent-workout__stats {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-shrink: 0;
+}
+
+.recent-workout__stat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.125rem;
+}
+
+.recent-workout__stat-label {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.recent-workout__stat-value {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.recent-workout__delete {
+  padding: 0.375rem 0.75rem;
+  background: transparent;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+  color: #fca5a5;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.recent-workout__delete:hover {
+  background: var(--danger);
+  color: white;
+  border-color: var(--danger);
+}
+
+/* Loading / empty states */
+.dashboard-loading,
+.dashboard-empty {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: var(--charcoal-900);
+  border: 1px solid var(--charcoal-700);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.dashboard-loading__spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid var(--charcoal-700);
+  border-top-color: var(--orange-500);
+  border-radius: 50%;
+  animation: dashboard-spin 0.7s linear infinite;
+}
+
+@keyframes dashboard-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.dashboard-alert {
+  padding: 0.875rem 1rem;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .dashboard-charts {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .dashboard-header {
+    flex-direction: column;
+  }
+
+  .dashboard-btn {
+    width: 100%;
+  }
+
+  .dashboard-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .recent-workout {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.875rem;
+  }
+
+  .recent-workout__stats {
+    justify-content: space-between;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--charcoal-700);
+  }
+
+  .recent-workout__stat {
+    align-items: flex-start;
+  }
+
+  .dashboard-chart-card {
+    padding: 1.25rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .recent-workout__stats {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+}

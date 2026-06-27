@@ -1,0 +1,34 @@
+# ==========================
+# IntelliJ IDEA
+# ==========================
+.idea/
+*.iml
+
+# ==========================
+# Backend (Spring Boot)
+# ==========================
+gym-progress-tracker-backend/target/
+gym-progress-tracker-backend/logs/
+gym-progress-tracker-backend/.mvn/wrapper/maven-wrapper.jar
+gym-progress-tracker-backend/.env
+gym-progress-tracker-backend/src/main/resources/application-local.properties
+
+# Log files
+*.log
+
+# ==========================
+# Frontend (React)
+# ==========================
+gym-progress-tracker-frontend/node_modules/
+gym-progress-tracker-frontend/dist/
+gym-progress-tracker-frontend/build/
+gym-progress-tracker-frontend/.env
+gym-progress-tracker-frontend/.env.local
+gym-progress-tracker-frontend/.env.development.local
+gym-progress-tracker-frontend/.env.production.local
+
+# ==========================
+# OS Files
+# ==========================
+.DS_Store
+Thumbs.db

@@ -1,13 +1,15 @@
+# Backend
+backend/target/
+backend/.idea/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+
+# IDE
+.vscode/
 .idea/
-*.iml
 
-target/
-
-.mvn/wrapper/maven-wrapper.jar
-
-logs/
-*.log
-
-.env
-
-application-local.properties
+# OS
+.DS_Store
