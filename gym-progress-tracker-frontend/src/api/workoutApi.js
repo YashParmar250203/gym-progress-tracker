@@ -4,6 +4,11 @@ export const addWorkout = (data) => api.post('/workout', data);
 
 export const getWorkoutHistory = () => api.get('/workout/history');
 
+export const getWorkoutSummary = () => api.get('/workout/summary');
+
+export const getWorkoutsByDate = (workoutDate) =>
+  api.get('/workout/date', { params: { workoutDate } });
+
 export const getWorkoutsByExercise = (exercise) =>
   api.get(`/workout/exercise/${exercise}`);
 

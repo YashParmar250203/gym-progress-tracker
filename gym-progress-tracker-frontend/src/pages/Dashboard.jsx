@@ -1,8 +1,14 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { deleteWorkout, getWorkoutHistory } from '../api/workoutApi';
+import {
+  deleteWorkout,
+  getWorkoutHistory,
+  getWorkoutSummary,
+  getWorkoutsByDate,
+} from '../api/workoutApi';
 import DistributionChart from '../components/dashboard/DistributionChart';
 import RecentWorkoutItem from '../components/dashboard/RecentWorkoutItem';
+import WorkoutDayDetail from '../components/dashboard/WorkoutDayDetail';
 import { MUSCLE_GROUP_LABELS } from '../constants/enums';
 import { getExerciseLabel } from '../constants/exerciseLabels';
 import {
@@ -14,16 +20,41 @@ import '../styles/dashboard.css';
 const RECENT_LIMIT = 8;
 
 export default function Dashboard() {
+  const [summary, setSummary] = useState([]);
   const [workouts, setWorkouts] = useState([]);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [dayWorkouts, setDayWorkouts] = useState([]);
+  const [dayLoading, setDayLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const loadDashboardData = useCallback(async () => {
+    const [summaryRes, historyRes] = await Promise.all([
+      getWorkoutSummary(),
+      getWorkoutHistory(),
+    ]);
+    setSummary(summaryRes.data);
+    setWorkouts(historyRes.data);
+  }, []);
+
   useEffect(() => {
-    getWorkoutHistory()
-      .then(({ data }) => setWorkouts(data))
+    loadDashboardData()
       .catch(() => setError('Failed to load workouts.'))
       .finally(() => setLoading(false));
-  }, []);
+  }, [loadDashboardData]);
+
+  useEffect(() => {
+    if (!selectedDate) {
+      setDayWorkouts([]);
+      return;
+    }
+
+    setDayLoading(true);
+    getWorkoutsByDate(selectedDate)
+      .then(({ data }) => setDayWorkouts(data))
+      .catch(() => setError('Failed to load workouts for this date.'))
+      .finally(() => setDayLoading(false));
+  }, [selectedDate]);
 
   const muscleGroupData = useMemo(
     () => getMuscleGroupDistribution(workouts, (key) => MUSCLE_GROUP_LABELS[key] || key),
@@ -35,11 +66,11 @@ export default function Dashboard() {
     [workouts],
   );
 
-  const recentWorkouts = useMemo(() => workouts.slice(0, RECENT_LIMIT), [workouts]);
+  const recentWorkouts = useMemo(() => summary.slice(0, RECENT_LIMIT), [summary]);
 
-  const uniqueExercises = useMemo(
-    () => new Set(workouts.map((w) => w.exercise)).size,
-    [workouts],
+  const totalExercisesDone = useMemo(
+    () => summary.reduce((sum, entry) => sum + entry.totalExercises, 0),
+    [summary],
   );
 
   const uniqueMuscleGroups = useMemo(
@@ -47,12 +78,24 @@ export default function Dashboard() {
     [workouts],
   );
 
+  const handleSelectDate = (date) => {
+    setSelectedDate((prev) => (prev === date ? null : date));
+  };
+
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this workout?')) return;
 
     try {
       await deleteWorkout(id);
-      setWorkouts((prev) => prev.filter((w) => w.id !== id));
+      await loadDashboardData();
+
+      if (selectedDate) {
+        const { data } = await getWorkoutsByDate(selectedDate);
+        setDayWorkouts(data);
+        if (data.length === 0) {
+          setSelectedDate(null);
+        }
+      }
     } catch {
       setError('Failed to delete workout.');
     }
@@ -69,7 +112,7 @@ export default function Dashboard() {
     );
   }
 
-  if (workouts.length === 0) {
+  if (summary.length === 0) {
     return (
       <div className="dashboard-page">
         <div className="dashboard-header">
@@ -114,12 +157,12 @@ export default function Dashboard() {
         <div className="dashboard-summary-card">
           <span className="dashboard-summary-card__label">Total Workouts</span>
           <span className="dashboard-summary-card__value dashboard-summary-card__value--accent">
-            {workouts.length}
+            {summary.length}
           </span>
         </div>
         <div className="dashboard-summary-card">
           <span className="dashboard-summary-card__label">Exercises Done</span>
-          <span className="dashboard-summary-card__value">{uniqueExercises}</span>
+          <span className="dashboard-summary-card__value">{totalExercisesDone}</span>
         </div>
         <div className="dashboard-summary-card">
           <span className="dashboard-summary-card__label">Muscle Groups</span>
@@ -148,14 +191,23 @@ export default function Dashboard() {
           <span>Last {recentWorkouts.length} sessions</span>
         </div>
         <div className="recent-workout-list">
-          {recentWorkouts.map((workout) => (
+          {recentWorkouts.map((entry, index) => (
             <RecentWorkoutItem
-              key={workout.id}
-              workout={workout}
-              onDelete={handleDelete}
+              key={`${entry.workoutDate}-${index}`}
+              summary={entry}
+              isSelected={selectedDate === entry.workoutDate}
+              onSelect={handleSelectDate}
             />
           ))}
         </div>
+        {selectedDate && (
+          <WorkoutDayDetail
+            workoutDate={selectedDate}
+            workouts={dayWorkouts}
+            loading={dayLoading}
+            onDelete={handleDelete}
+          />
+        )}
       </section>
     </div>
   );

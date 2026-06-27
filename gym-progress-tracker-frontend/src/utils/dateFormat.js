@@ -1,3 +1,48 @@
+function toIsoDate(year, month, day) {
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
+function parseIsoDate(isoDate) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDate);
+  if (!match) return null;
+
+  const year = parseInt(match[1], 10);
+  const month = parseInt(match[2], 10);
+  const day = parseInt(match[3], 10);
+  const date = new Date(year, month - 1, day);
+
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return date;
+}
+
+export function getTodayIso() {
+  const today = new Date();
+  return toIsoDate(today.getFullYear(), today.getMonth() + 1, today.getDate());
+}
+
+export function getYesterdayIso() {
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  return toIsoDate(
+    yesterday.getFullYear(),
+    yesterday.getMonth() + 1,
+    yesterday.getDate(),
+  );
+}
+
+export function getMinBirthDateIso() {
+  const minDate = new Date();
+  minDate.setFullYear(minDate.getFullYear() - 120);
+  return toIsoDate(minDate.getFullYear(), minDate.getMonth() + 1, minDate.getDate());
+}
+
 export function formatIsoToDisplay(isoDate) {
   if (!isoDate) return '';
 
@@ -7,42 +52,12 @@ export function formatIsoToDisplay(isoDate) {
   return `${day}/${month}/${year}`;
 }
 
-export function formatDateInput(value) {
-  const digits = value.replace(/\D/g, '').slice(0, 8);
-
-  if (digits.length <= 2) return digits;
-  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
-  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
-}
-
-export function parseDdMmYyyyToIso(value) {
-  const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value);
-  if (!match) return null;
-
-  const day = parseInt(match[1], 10);
-  const month = parseInt(match[2], 10);
-  const year = parseInt(match[3], 10);
-
-  const date = new Date(year, month - 1, day);
-  if (
-    date.getFullYear() !== year ||
-    date.getMonth() !== month - 1 ||
-    date.getDate() !== day
-  ) {
-    return null;
-  }
-
-  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-}
-
 export function validateDateOfBirth(value) {
-  if (!value.trim()) return 'Date of birth is required';
-  if (!/^\d{2}\/\d{2}\/\d{4}$/.test(value)) return 'Use DD/MM/YYYY format';
+  if (!value?.trim()) return 'Date of birth is required';
 
-  const iso = parseDdMmYyyyToIso(value);
-  if (!iso) return 'Enter a valid date';
+  const birth = parseIsoDate(value);
+  if (!birth) return 'Enter a valid date';
 
-  const birth = new Date(iso);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 

@@ -231,6 +231,17 @@
   box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.15);
 }
 
+.form-field__input.date-picker-input {
+  color-scheme: dark;
+  cursor: pointer;
+}
+
+.form-field__input.date-picker-input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: invert(0.75);
+  opacity: 0.85;
+}
+
 .form-field--error .form-field__input,
 .form-field--error .form-field__select,
 .form-field--error .password-field__input {

@@ -1,9 +1,6 @@
 package com.gym.workout.service;
 
-import com.gym.workout.dto.AddWorkoutRequestDto;
-import com.gym.workout.dto.AddWorkoutResponseDto;
-import com.gym.workout.dto.SetDto;
-import com.gym.workout.dto.WorkoutResponseDto;
+import com.gym.workout.dto.*;
 import com.gym.workout.entity.SetEntry;
 import com.gym.workout.entity.WorkoutEntry;
 import com.gym.workout.enums.Exercise;
@@ -11,12 +8,17 @@ import com.gym.workout.enums.MuscleGroup;
 import com.gym.workout.exception.UnauthorizedAccessException;
 import com.gym.workout.exception.WorkoutNotFoundException;
 import com.gym.workout.repository.WorkoutRepository;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.aggregation.*;
+import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,9 +26,11 @@ import java.util.Optional;
 public class WorkoutService {
 
     private final WorkoutRepository workoutRepository;
+    private MongoTemplate mongoTemplate;
 
-    public WorkoutService(WorkoutRepository workoutRepository) {
+    public WorkoutService(WorkoutRepository workoutRepository, MongoTemplate mongoTemplate) {
         this.workoutRepository = workoutRepository;
+        this.mongoTemplate = mongoTemplate;
     }
 
     @Transactional
@@ -193,5 +197,40 @@ public class WorkoutService {
     public List<WorkoutResponseDto> getMuscleGroupWorkouts(String userEmail, MuscleGroup muscleGroup) {
         List<WorkoutEntry> workoutEntries = workoutRepository.findByUserEmailAndMuscleGroupOrderByWorkoutDateDesc(userEmail, muscleGroup);
         return workoutEntries.stream().map(this::toDto).toList();
+    }
+
+    public List<WorkoutResponseDto> getWorkoutsByDate(LocalDate workoutDate, String userEmail) {
+
+        List<WorkoutEntry> entries = workoutRepository
+                .findByUserEmailAndWorkoutDateOrderByCreatedAt(userEmail, workoutDate)
+                .orElse(Collections.emptyList());
+
+        return entries.stream()
+                .map(this::toDto)
+                .toList();
+    }
+
+    public List<WorkoutSummaryDto> getWorkoutSummary(String userEmail) {
+
+        MatchOperation match = Aggregation.match(
+                Criteria.where("userEmail").is(userEmail)
+        );
+
+        GroupOperation group = Aggregation.group("workoutDate")
+                .count().as("totalExercises");
+
+        SortOperation sort = Aggregation.sort(
+                Sort.by(Sort.Direction.DESC, "_id")
+        );
+
+        Aggregation aggregation = Aggregation.newAggregation(match, group, sort);
+
+        AggregationResults<WorkoutSummaryDto> results = mongoTemplate.aggregate(
+                aggregation,
+                "workout_entries",
+                WorkoutSummaryDto.class
+        );
+
+        return results.getMappedResults();
     }
 }

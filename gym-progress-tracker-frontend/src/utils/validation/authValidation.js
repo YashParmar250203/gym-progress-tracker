@@ -1,4 +1,4 @@
-import { parseDdMmYyyyToIso, validateDateOfBirth } from '../dateFormat';
+import { validateDateOfBirth } from '../dateFormat';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -113,15 +113,13 @@ export function validateRegisterForm(form) {
 }
 
 export function buildRegisterPayload(form) {
-  const isoDate = parseDdMmYyyyToIso(form.dateOfBirth);
-
   return {
     email: form.email.trim(),
     password: form.password,
     fullName: form.fullName.trim(),
     height: parseFloat(form.height),
     weight: parseFloat(form.weight),
-    dateOfBirth: isoDate,
+    dateOfBirth: form.dateOfBirth,
     fitnessGoal: form.fitnessGoal,
     gender: form.gender,
   };

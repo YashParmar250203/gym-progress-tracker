@@ -1,5 +1,5 @@
-import FormField from './FormField';
-import { formatDateInput } from '../../utils/dateFormat';
+import DatePickerField from '../DatePickerField';
+import { getMinBirthDateIso, getYesterdayIso } from '../../utils/dateFormat';
 
 export default function DateInput({
   id,
@@ -10,31 +10,22 @@ export default function DateInput({
   onBlur,
   error,
   required = false,
+  min = getMinBirthDateIso(),
+  max = getYesterdayIso(),
 }) {
-  const handleChange = (e) => {
-    onChange({
-      target: {
-        name,
-        value: formatDateInput(e.target.value),
-      },
-    });
-  };
-
   return (
-    <FormField
+    <DatePickerField
       id={id}
       label={label}
       name={name}
       value={value}
-      onChange={handleChange}
+      onChange={onChange}
       onBlur={onBlur}
-      placeholder="DD/MM/YYYY"
       error={error}
-      hint="Format: DD/MM/YYYY"
       required={required}
-      inputMode="numeric"
-      maxLength={10}
-      autoComplete="bday"
+      min={min}
+      max={max}
+      variant="auth"
     />
   );
 }

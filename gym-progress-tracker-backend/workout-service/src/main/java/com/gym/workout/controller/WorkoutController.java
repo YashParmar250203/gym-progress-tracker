@@ -1,18 +1,17 @@
 package com.gym.workout.controller;
 
-import com.gym.workout.dto.AddWorkoutRequestDto;
-import com.gym.workout.dto.AddWorkoutResponseDto;
-import com.gym.workout.dto.SingleMessageResponseDto;
-import com.gym.workout.dto.WorkoutResponseDto;
+import com.gym.workout.dto.*;
 import com.gym.workout.enums.Exercise;
 import com.gym.workout.enums.MuscleGroup;
 import com.gym.workout.security.SecurityUtils;
 import com.gym.workout.service.WorkoutService;
 import jakarta.validation.Valid;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -119,5 +118,29 @@ public class WorkoutController {
         List<WorkoutResponseDto> responseDtoList = workoutService.getMuscleGroupWorkouts(userEmail, muscleGroup);
 
         return ResponseEntity.status(HttpStatus.OK).body(responseDtoList);
+    }
+
+    @GetMapping("/date")
+    public ResponseEntity<List<WorkoutResponseDto>> getWorkoutsByDate(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate workoutDate
+    ) {
+        String userEmail =
+                securityUtils.getCurrentUserEmail();
+
+        List<WorkoutResponseDto> responseList =
+                workoutService.getWorkoutsByDate(workoutDate, userEmail);
+
+        return ResponseEntity.ok(responseList);
+    }
+
+    @GetMapping("/summary")
+    public ResponseEntity<List<WorkoutSummaryDto>> getWorkoutSummary() {
+        String userEmail =
+                securityUtils.getCurrentUserEmail();
+
+        List<WorkoutSummaryDto> summary =
+                workoutService.getWorkoutSummary(userEmail);
+
+        return ResponseEntity.ok(summary);
     }
 }

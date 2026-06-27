@@ -41,4 +41,6 @@ public interface WorkoutRepository extends MongoRepository<WorkoutEntry, String>
     );
 
     Optional<WorkoutEntry> findByUserEmailAndId(String userEmail, String id);
+
+    Optional<List<WorkoutEntry>> findByUserEmailAndWorkoutDateOrderByCreatedAt(String userEmail, LocalDate workoutDate);
 }

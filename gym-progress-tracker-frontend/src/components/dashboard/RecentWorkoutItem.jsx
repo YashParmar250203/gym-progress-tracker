@@ -1,49 +1,31 @@
-import { MUSCLE_GROUP_LABELS } from '../../constants/enums';
-import { getExerciseLabel } from '../../constants/exerciseLabels';
 import { formatIsoToDisplay } from '../../utils/dateFormat';
-import { getMaxWeight } from '../../utils/workoutStats';
 
-export default function RecentWorkoutItem({ workout, onDelete }) {
-  const maxWeight = getMaxWeight(workout.sets);
-  const setCount = workout.sets?.length ?? 0;
+export default function RecentWorkoutItem({ summary, isSelected, onSelect }) {
+  const exerciseLabel =
+    summary.totalExercises === 1 ? '1 exercise' : `${summary.totalExercises} exercises`;
 
   return (
-    <article className="recent-workout">
+    <button
+      type="button"
+      className={`recent-workout recent-workout--selectable${isSelected ? ' recent-workout--selected' : ''}`}
+      onClick={() => onSelect(summary.workoutDate)}
+      aria-pressed={isSelected}
+    >
       <div className="recent-workout__main">
         <div className="recent-workout__icon" aria-hidden="true">
-          {MUSCLE_GROUP_LABELS[workout.muscleGroup]?.charAt(0) ?? '?'}
+          {summary.workoutDate.split('-')[2]}
         </div>
         <div className="recent-workout__info">
-          <h3>{getExerciseLabel(workout.exercise)}</h3>
+          <h3>{formatIsoToDisplay(summary.workoutDate)}</h3>
           <div className="recent-workout__meta">
-            <span className="recent-workout__badge">
-              {MUSCLE_GROUP_LABELS[workout.muscleGroup]}
-            </span>
-            <span className="recent-workout__date">
-              {formatIsoToDisplay(workout.workoutDate)}
-            </span>
+            <span className="recent-workout__badge">{exerciseLabel}</span>
           </div>
         </div>
       </div>
 
-      <div className="recent-workout__stats">
-        <div className="recent-workout__stat">
-          <span className="recent-workout__stat-label">Sets</span>
-          <span className="recent-workout__stat-value">{setCount}</span>
-        </div>
-        <div className="recent-workout__stat">
-          <span className="recent-workout__stat-label">Max</span>
-          <span className="recent-workout__stat-value">{maxWeight} kg</span>
-        </div>
-        <button
-          type="button"
-          className="recent-workout__delete"
-          onClick={() => onDelete(workout.id)}
-          aria-label={`Delete ${getExerciseLabel(workout.exercise)} workout`}
-        >
-          Delete
-        </button>
-      </div>
-    </article>
+      <span className="recent-workout__chevron" aria-hidden="true">
+        {isSelected ? '▲' : '▼'}
+      </span>
+    </button>
   );
 }
