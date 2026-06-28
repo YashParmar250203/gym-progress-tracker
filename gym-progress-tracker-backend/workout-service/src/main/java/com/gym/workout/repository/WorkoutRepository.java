@@ -24,7 +24,7 @@ public interface WorkoutRepository extends MongoRepository<WorkoutEntry, String>
             LocalDate workoutDate
     );
 
-    List<WorkoutEntry> findByUserEmailAndExercise(
+    List<WorkoutEntry> findByUserEmailAndExerciseOrderByWorkoutDateDesc(
             String userEmail,
             Exercise exercise
     );

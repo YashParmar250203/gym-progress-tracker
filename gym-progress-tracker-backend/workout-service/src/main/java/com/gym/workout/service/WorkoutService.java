@@ -149,7 +149,7 @@ public class WorkoutService {
 
     // service
     public List<WorkoutResponseDto> getWorkoutsByExercise(Exercise exercise, String email) {
-        List<WorkoutEntry> list = workoutRepository.findByUserEmailAndExercise(email, exercise);
+        List<WorkoutEntry> list = workoutRepository.findByUserEmailAndExerciseOrderByWorkoutDateDesc(email, exercise);
         return list.stream().map(this::toDto).toList();
     }
 

@@ -6,6 +6,16 @@ import { MUSCLE_GROUP_LABELS } from '../constants/enums';
 import { getExerciseLabel } from '../constants/exerciseLabels';
 import DatePickerField from '../components/DatePickerField';
 import { getTodayIso } from '../utils/dateFormat';
+import axios from 'axios';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts';
 import '../styles/addWorkout.css';
 import absImg from '../images/abs.png';
 import backImg from '../images/back.png';
@@ -29,6 +39,26 @@ const MUSCLE_GROUP_IMAGES = {
 
 const emptySet = (setNumber) => ({ setNumber, reps: '', weight: '' });
 
+const API_BASE = 'http://localhost:8080';
+
+// ── Recharts custom tooltip ──────────────────────────────────────────────────
+const CustomTooltip = ({ active, payload, label }) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div style={{
+      background: '#1e2235',
+      border: '1px solid #2a2f45',
+      borderRadius: 8,
+      padding: '8px 14px',
+    }}>
+      <p style={{ color: '#9ca3af', fontSize: 12, margin: '0 0 2px' }}>{label}</p>
+      <p style={{ color: '#FF6B35', fontSize: 15, fontWeight: 600, margin: 0 }}>
+        {payload[0].value} kg
+      </p>
+    </div>
+  );
+};
+
 export default function AddWorkout() {
   const navigate = useNavigate();
   const [step, setStep] = useState('groups');
@@ -43,11 +73,39 @@ export default function AddWorkout() {
   const [loading, setLoading] = useState(false);
   const [loadingExercises, setLoadingExercises] = useState(false);
 
+  // analytics + history state
+  const [analytics, setAnalytics] = useState(null);
+  const [history, setHistory] = useState([]);
+  const [loadingAnalytics, setLoadingAnalytics] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
   useEffect(() => {
     getMuscleGroups()
       .then(({ data }) => setMuscleGroups(data))
       .catch(() => setError('Failed to load muscle groups.'));
   }, []);
+
+  // fetch analytics + history whenever an exercise is selected
+  useEffect(() => {
+    if (!exercise) return;
+
+    const token = localStorage.getItem('token');
+    const headers = { Authorization: `Bearer ${token}` };
+
+    setLoadingAnalytics(true);
+    axios
+      .get(`${API_BASE}/analytics/exercise/${exercise}`, { headers })
+      .then(({ data }) => setAnalytics(data))
+      .catch(() => setAnalytics(null))
+      .finally(() => setLoadingAnalytics(false));
+
+    setLoadingHistory(true);
+    axios
+      .get(`${API_BASE}/workout/exercise/${exercise}`, { headers })
+      .then(({ data }) => setHistory(data))
+      .catch(() => setHistory([]))
+      .finally(() => setLoadingHistory(false));
+  }, [exercise]);
 
   const selectMuscleGroup = (mg) => {
     setError('');
@@ -66,6 +124,8 @@ export default function AddWorkout() {
     setError('');
     setExercise(ex);
     setSets([emptySet(1)]);
+    setAnalytics(null);
+    setHistory([]);
     setStep('log');
   };
 
@@ -129,6 +189,7 @@ export default function AddWorkout() {
     }
   };
 
+  // ── Step: muscle groups ────────────────────────────────────────────────────
   const renderGroupsStep = () => (
     <>
       <div className="page-header">
@@ -154,16 +215,10 @@ export default function AddWorkout() {
             >
               <div className="muscle-group-card__media">
                 {MUSCLE_GROUP_IMAGES[mg] && (
-                  <img
-                    src={MUSCLE_GROUP_IMAGES[mg]}
-                    alt=""
-                    className="muscle-group-card__image"
-                  />
+                  <img src={MUSCLE_GROUP_IMAGES[mg]} alt="" className="muscle-group-card__image" />
                 )}
               </div>
-              <div className="muscle-group-card__label">
-                {MUSCLE_GROUP_LABELS[mg]}
-              </div>
+              <div className="muscle-group-card__label">{MUSCLE_GROUP_LABELS[mg]}</div>
             </button>
           ))}
         </div>
@@ -171,6 +226,7 @@ export default function AddWorkout() {
     </>
   );
 
+  // ── Step: exercises ────────────────────────────────────────────────────────
   const renderExercisesStep = () => (
     <>
       <div className="add-workout-header">
@@ -210,102 +266,216 @@ export default function AddWorkout() {
     </>
   );
 
-  const renderLogStep = () => (
-    <>
-      <div className="add-workout-header">
-        <button type="button" className="add-workout-back" onClick={goBackToExercises}>
-          ← {MUSCLE_GROUP_LABELS[muscleGroup]} exercises
-        </button>
-        <div className="page-header">
-          <div>
-            <h1>Log Workout</h1>
-            <p className="text-muted">Record your sets and weight</p>
-          </div>
-        </div>
-      </div>
+  // ── Step: log (the main new layout) ───────────────────────────────────────
+  const renderLogStep = () => {
+    const chartData = analytics?.progress?.map((p) => ({
+      date: p.date,
+      maxWeight: p.maxWeight,
+    })) ?? [];
 
-      <form onSubmit={handleSubmit} className="form-card">
-        {error && <div className="alert alert-error">{error}</div>}
-        {success && <div className="alert alert-success">{success}</div>}
-
-        <div className="add-workout-form-header">
-          <h2>{getExerciseLabel(exercise)}</h2>
-          <p className="add-workout-form-meta">
-            {MUSCLE_GROUP_LABELS[muscleGroup]}
-          </p>
-        </div>
-
-        <div className="form-grid">
-          <DatePickerField
-            id="workout-date"
-            label="Workout Date"
-            name="workoutDate"
-            value={workoutDate}
-            onChange={(e) => setWorkoutDate(e.target.value)}
-            required
-            hint="Defaults to today — change if logging a past session"
-          />
-        </div>
-
-        <div className="sets-section">
-          <div className="sets-section-header">
-            <h2>Sets</h2>
-            <button type="button" className="btn btn-ghost btn-sm" onClick={addSet}>
-              + Add Set
-            </button>
-          </div>
-
-          <div className="sets-table">
-            <div className="sets-table-head">
-              <span>Set</span>
-              <span>Reps</span>
-              <span>Weight (kg)</span>
-              <span></span>
+    return (
+      <>
+        {/* back nav */}
+        <div className="add-workout-header">
+          <button type="button" className="add-workout-back" onClick={goBackToExercises}>
+            ← {MUSCLE_GROUP_LABELS[muscleGroup]} exercises
+          </button>
+          <div className="page-header">
+            <div>
+              <h1>{getExerciseLabel(exercise)}</h1>
+              <p className="text-muted">{MUSCLE_GROUP_LABELS[muscleGroup]}</p>
             </div>
-            {sets.map((set, index) => (
-              <div key={set.setNumber} className="sets-table-row">
-                <span className="set-label">{set.setNumber}</span>
-                <input
-                  type="number"
-                  min="1"
-                  value={set.reps}
-                  onChange={(e) => updateSet(index, 'reps', e.target.value)}
-                  placeholder="10"
+          </div>
+        </div>
+
+        {/* ── TOP 60% — log form + progress chart side by side ── */}
+        <div className="log-top-row">
+
+          {/* LEFT 50% — log form */}
+          <div className="log-form-panel">
+            <form onSubmit={handleSubmit} className="form-card">
+              {error && <div className="alert alert-error">{error}</div>}
+              {success && <div className="alert alert-success">{success}</div>}
+
+              <div className="form-section-title">Log workout</div>
+
+              <div className="form-grid">
+                <DatePickerField
+                  id="workout-date"
+                  label="Workout Date"
+                  name="workoutDate"
+                  value={workoutDate}
+                  onChange={(e) => setWorkoutDate(e.target.value)}
                   required
+                  hint="Defaults to today — change if logging a past session"
                 />
-                <input
-                  type="number"
-                  min="0.1"
-                  step="0.5"
-                  value={set.weight}
-                  onChange={(e) => updateSet(index, 'weight', e.target.value)}
-                  placeholder="60"
-                  required
-                />
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-sm"
-                  onClick={() => removeSet(index)}
-                  disabled={sets.length <= 1}
-                >
-                  ✕
+              </div>
+
+              <div className="sets-section">
+                <div className="sets-section-header">
+                  <h2>Sets</h2>
+                  <button type="button" className="btn btn-ghost btn-sm" onClick={addSet}>
+                    + Add set
+                  </button>
+                </div>
+
+                <div className="sets-table">
+                  <div className="sets-table-head">
+                    <span>Set</span>
+                    <span>Reps</span>
+                    <span>Weight (kg)</span>
+                    <span></span>
+                  </div>
+                  {sets.map((set, index) => (
+                    <div key={set.setNumber} className="sets-table-row">
+                      <span className="set-label">{set.setNumber}</span>
+                      <input
+                        type="number"
+                        min="1"
+                        step="1"
+                        value={set.reps}
+                        onChange={(e) => updateSet(index, 'reps', e.target.value)}
+                        placeholder="10"
+                        required
+                      />
+                      <input
+                        type="number"
+                        min="0"
+                        step="any"
+                        value={set.weight}
+                        onChange={(e) => updateSet(index, 'weight', e.target.value)}
+                        placeholder="60"
+                        required
+                      />
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-sm"
+                        onClick={() => removeSet(index)}
+                        disabled={sets.length <= 1}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="form-actions">
+                <button type="button" className="btn btn-ghost" onClick={() => navigate('/')}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary" disabled={loading}>
+                  {loading ? 'Saving…' : 'Save Workout'}
                 </button>
               </div>
-            ))}
+            </form>
+          </div>
+
+          {/* RIGHT 50% — progress chart */}
+          <div className="log-chart-panel">
+            <div className="panel-card">
+              <div className="panel-card__header">
+                <span className="panel-card__title">Progress</span>
+                {analytics && (
+                  <div className="analytics-stats">
+                    <div className="stat-pill">
+                      <span className="stat-pill__label">PR</span>
+                      <span className="stat-pill__value">{analytics.maxWeight} kg</span>
+                    </div>
+                    <div className="stat-pill">
+                      <span className="stat-pill__label">Current</span>
+                      <span className="stat-pill__value">{analytics.currentWeight} kg</span>
+                    </div>
+                    <div className="stat-pill">
+                      <span className="stat-pill__label">Sessions</span>
+                      <span className="stat-pill__value">{analytics.totalWorkouts}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {loadingAnalytics ? (
+                <div className="loading-state">Loading progress…</div>
+              ) : chartData.length === 0 ? (
+                <div className="empty-state">
+                  No progress data yet — save your first set to see the graph.
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={220}>
+                  <LineChart data={chartData} margin={{ top: 8, right: 30, left: 0, bottom: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#2a2f45" />
+                    <XAxis
+                      dataKey="date"
+                      tick={{ fill: 'var(--text-muted)', fontSize: 10 }}
+                      tickLine={false}
+                      axisLine={{ stroke: 'var(--border)' }}
+                      angle={-35}
+                      textAnchor="end"
+                      height={50}
+                    />
+                    <YAxis
+                      tick={{ fill: '#9ca3af', fontSize: 11 }}
+                      tickLine={false}
+                      axisLine={false}
+                      unit=" kg"
+                    />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Line
+                      type="monotone"
+                      dataKey="maxWeight"
+                      stroke="#FF6B35"
+                      strokeWidth={2.5}
+                      dot={{ fill: '#FF6B35', r: 4, strokeWidth: 0 }}
+                      activeDot={{ r: 6, fill: '#FF6B35' }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
+            </div>
           </div>
         </div>
 
-        <div className="form-actions">
-          <button type="button" className="btn btn-ghost" onClick={() => navigate('/')}>
-            Cancel
-          </button>
-          <button type="submit" className="btn btn-primary" disabled={loading}>
-            {loading ? 'Saving…' : 'Save Workout'}
-          </button>
+        {/* ── BOTTOM 40% — past sessions ── */}
+        <div className="log-history-row">
+          <div className="panel-card">
+            <div className="panel-card__header">
+              <span className="panel-card__title">Past sessions</span>
+            </div>
+
+            {loadingHistory ? (
+              <div className="loading-state">Loading history…</div>
+            ) : history.length === 0 ? (
+              <div className="empty-state">No previous sessions recorded for this exercise.</div>
+            ) : (
+              <div className="history-list">
+                {history.map((entry) => (
+                  <div key={entry.id} className="history-card">
+                    <div className="history-card__date">{entry.workoutDate}</div>
+                    <div className="history-card__sets">
+                      {entry.sets.map((s) => (
+                        <div key={s.setNumber} className="history-set">
+                          <span className="history-set__num">Set {s.setNumber}</span>
+                          <span className="history-set__detail">{s.reps} reps</span>
+                          <span className="history-set__weight">{s.weight} kg</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="history-card__meta">
+                      Max: <strong>
+                        {Math.max(...entry.sets.map((s) => s.weight))} kg
+                      </strong>
+                      &nbsp;·&nbsp;
+                      {entry.sets.length} sets
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
-      </form>
-    </>
-  );
+      </>
+    );
+  };
 
   return (
     <div className={`page${step === 'groups' ? ' add-workout-page--wide' : ''}`}>
