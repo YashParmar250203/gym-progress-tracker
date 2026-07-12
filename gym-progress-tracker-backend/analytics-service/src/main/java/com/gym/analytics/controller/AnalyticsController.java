@@ -5,6 +5,7 @@ import com.gym.analytics.enums.Exercise;
 import com.gym.analytics.security.SecurityUtils;
 import com.gym.analytics.service.AnalyticsService;
 import jakarta.ws.rs.Path;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,6 +25,7 @@ public class AnalyticsController {
         this.analyticsService = analyticsService;
         this.securityUtils = securityUtils;
     }
+
 
     @GetMapping("/exercise/{exercise}")
     public ResponseEntity<AnalyticsResponseDto> getExerciseAnalytics(@PathVariable Exercise exercise){

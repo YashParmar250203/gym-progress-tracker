@@ -1,4 +1,4 @@
-package com.gym.workout.config;
+package com.gym.analytics.config;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -24,25 +24,8 @@ import java.util.Map;
 @EnableCaching
 public class RedisConfig {
 
-    // ─────────────────────────────────────────────
-    // ObjectMapper 1 — NO type info
-    // Used for: muscleGroups, exercisesByMuscleGroup
-    // These caches store List<String> — plain arrays
-    // Type info breaks string deserialization
-    // ─────────────────────────────────────────────
-    private ObjectMapper simpleMapper() {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JavaTimeModule());
-        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        return mapper;
-    }
-
-    // ─────────────────────────────────────────────
-    // ObjectMapper 2 — WITH type info
-    // Used for: dashboard
-    // Stores DashboardResponseDto (complex nested object)
-    // Needs @class property to deserialize back correctly
-    // ─────────────────────────────────────────────
+    // Analytics stores AnalyticsResponseDto — complex object
+    // needs typed mapper so Redis knows what to deserialize back to
     private ObjectMapper typedMapper() {
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
@@ -62,9 +45,8 @@ public class RedisConfig {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
 
-        // RedisTemplate uses simple mapper — for manual ops if needed
         GenericJackson2JsonRedisSerializer jsonSerializer =
-                new GenericJackson2JsonRedisSerializer(simpleMapper());
+                new GenericJackson2JsonRedisSerializer(typedMapper());
 
         template.setKeySerializer(new StringRedisSerializer());
         template.setHashKeySerializer(new StringRedisSerializer());
@@ -78,18 +60,6 @@ public class RedisConfig {
     @Bean
     public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
 
-        // Simple config — no type info — for List<String> caches
-        RedisCacheConfiguration simpleConfig = RedisCacheConfiguration
-                .defaultCacheConfig()
-                .serializeKeysWith(
-                        RedisSerializationContext.SerializationPair
-                                .fromSerializer(new StringRedisSerializer()))
-                .serializeValuesWith(
-                        RedisSerializationContext.SerializationPair
-                                .fromSerializer(new GenericJackson2JsonRedisSerializer(simpleMapper())))
-                .disableCachingNullValues();
-
-        // Typed config — with type info — for complex object caches
         RedisCacheConfiguration typedConfig = RedisCacheConfiguration
                 .defaultCacheConfig()
                 .serializeKeysWith(
@@ -100,21 +70,14 @@ public class RedisConfig {
                                 .fromSerializer(new GenericJackson2JsonRedisSerializer(typedMapper())))
                 .disableCachingNullValues();
 
-        // Assign the right config to each cache by name
         Map<String, RedisCacheConfiguration> cacheConfigs = new HashMap<>();
 
-        // List<String> caches — use simpleConfig
-        cacheConfigs.put("muscleGroups",
-                simpleConfig.entryTtl(Duration.ofHours(24)));
-        cacheConfigs.put("exercisesByMuscleGroup",
-                simpleConfig.entryTtl(Duration.ofHours(24)));
-
-        // Complex object cache — use typedConfig
-        cacheConfigs.put("dashboard",
-                typedConfig.entryTtl(Duration.ofMinutes(5)));
+        // Key pattern: analytics::user@gmail.com:BENCH_PRESS
+        // TTL: 10 minutes
+        cacheConfigs.put("analytics", typedConfig.entryTtl(Duration.ofMinutes(10)));
 
         return RedisCacheManager.builder(connectionFactory)
-                .cacheDefaults(simpleConfig)
+                .cacheDefaults(typedConfig)
                 .withInitialCacheConfigurations(cacheConfigs)
                 .build();
     }

@@ -143,4 +143,11 @@ public class WorkoutController {
 
         return ResponseEntity.ok(summary);
     }
+
+    @GetMapping("/dashboard")
+    public ResponseEntity<DashboardResponseDto> getDashboard() {
+        String userEmail = securityUtils.getCurrentUserEmail();
+        DashboardResponseDto response = workoutService.getDashboard(userEmail);
+        return ResponseEntity.ok(response);
+    }
 }

@@ -4,7 +4,6 @@ import com.gym.workout.dto.WorkoutResponseDto;
 import com.gym.workout.enums.Exercise;
 import com.gym.workout.security.SecurityUtils;
 import com.gym.workout.service.WorkoutService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

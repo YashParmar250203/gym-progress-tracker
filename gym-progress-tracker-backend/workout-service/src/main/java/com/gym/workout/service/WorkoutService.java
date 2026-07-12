@@ -8,6 +8,8 @@ import com.gym.workout.enums.MuscleGroup;
 import com.gym.workout.exception.UnauthorizedAccessException;
 import com.gym.workout.exception.WorkoutNotFoundException;
 import com.gym.workout.repository.WorkoutRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.*;
@@ -27,18 +29,23 @@ public class WorkoutService {
 
     private final WorkoutRepository workoutRepository;
     private MongoTemplate mongoTemplate;
+    private final CacheEvictionService cacheEvictionService;
 
-    public WorkoutService(WorkoutRepository workoutRepository, MongoTemplate mongoTemplate) {
+    public WorkoutService(WorkoutRepository workoutRepository, MongoTemplate mongoTemplate, CacheEvictionService cacheEvictionService) {
         this.workoutRepository = workoutRepository;
         this.mongoTemplate = mongoTemplate;
+        this.cacheEvictionService = cacheEvictionService;
     }
 
+    // Evict dashboard cache when workout is saved
+    @CacheEvict(value = "dashboard", key = "#userEmail")
     @Transactional
     public AddWorkoutResponseDto saveWorkout(
             AddWorkoutRequestDto requestDto,
             String userEmail
     ) {
 
+        cacheEvictionService.evictUserAnalytics(userEmail);
         Optional<WorkoutEntry> existingWorkout =
                 workoutRepository.findByUserEmailAndExerciseAndWorkoutDate(
                         userEmail,
@@ -113,8 +120,11 @@ public class WorkoutService {
         return workout;
     }
 
+    // Evict dashboard cache when workout is updated
+    @CacheEvict(value = "dashboard", key = "#userEmail")
     public AddWorkoutResponseDto updateWorkout(AddWorkoutRequestDto requestDto, String id, String userEmail) {
 
+        cacheEvictionService.evictUserAnalytics(userEmail);
         WorkoutEntry oldEntry = workoutRepository.findById(id)
                 .orElseThrow(() -> new WorkoutNotFoundException("Workout not found!"));
 
@@ -135,8 +145,10 @@ public class WorkoutService {
         );
     }
 
+    // Evict dashboard cache when workout is deleted
+    @CacheEvict(value = "dashboard", key = "#userEmail")
     public void deleteWorkout(String id, String userEmail) {
-
+        cacheEvictionService.evictUserAnalytics(userEmail);
         WorkoutEntry workoutEntry = workoutRepository.findById(id)
                 .orElseThrow(() -> new WorkoutNotFoundException("Workout not found."));
 
@@ -232,5 +244,12 @@ public class WorkoutService {
         );
 
         return results.getMappedResults();
+    }
+
+    @Cacheable(value = "dashboard", key = "#userEmail")
+    public DashboardResponseDto getDashboard(String userEmail) {
+        List<WorkoutResponseDto> workouts = getWorkoutHistory(userEmail);
+        List<WorkoutSummaryDto> summary = getWorkoutSummary(userEmail);
+        return new DashboardResponseDto(summary, workouts);
     }
 }

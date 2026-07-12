@@ -6,6 +6,7 @@ import com.gym.analytics.dto.ProgressPointDto;
 import com.gym.analytics.dto.SetDto;
 import com.gym.analytics.dto.WorkoutResponseDto;
 import com.gym.analytics.enums.Exercise;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
@@ -20,6 +21,9 @@ public class AnalyticsService {
         this.workoutServiceClient = workoutServiceClient;
     }
 
+    // Cache key: "analytics::user@gmail.com:BENCH_PRESS"
+    // Each user + exercise combination gets its own cache entry
+    @Cacheable(value = "analytics", key = "#userEmail + ':' + #exercise.name()")
     public AnalyticsResponseDto getExerciseAnalytics(Exercise exercise, String userEmail) {
         List<WorkoutResponseDto> workouts  = workoutServiceClient.getWorkoutsByExercise(exercise, userEmail);
 
