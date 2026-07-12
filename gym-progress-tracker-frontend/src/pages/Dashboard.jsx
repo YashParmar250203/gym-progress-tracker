@@ -2,8 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   deleteWorkout,
-  getWorkoutHistory,
-  getWorkoutSummary,
+  getDashboard,
   getWorkoutsByDate,
 } from '../api/workoutApi';
 import DistributionChart from '../components/dashboard/DistributionChart';
@@ -13,7 +12,7 @@ import { MUSCLE_GROUP_LABELS } from '../constants/enums';
 import { getExerciseLabel } from '../constants/exerciseLabels';
 import {
   getExerciseDistribution,
-  getMuscleGroupDistribution,
+  getMuscleGroupDistribution, 
 } from '../utils/workoutStats';
 import '../styles/dashboard.css';
 
@@ -29,12 +28,9 @@ export default function Dashboard() {
   const [error, setError] = useState('');
 
   const loadDashboardData = useCallback(async () => {
-    const [summaryRes, historyRes] = await Promise.all([
-      getWorkoutSummary(),
-      getWorkoutHistory(),
-    ]);
-    setSummary(summaryRes.data);
-    setWorkouts(historyRes.data);
+    const { data } = await getDashboard();
+    setSummary(data.summary);
+    setWorkouts(data.workouts);
   }, []);
 
   useEffect(() => {
