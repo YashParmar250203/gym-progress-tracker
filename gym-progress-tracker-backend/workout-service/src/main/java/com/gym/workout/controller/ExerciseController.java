@@ -23,17 +23,14 @@ public class ExerciseController {
     }
 
     @GetMapping("/muscle-groups")
-    public ResponseEntity<List<MuscleGroup>> getAllMuscleGroups(){
-
-        List<MuscleGroup> list = exerciseService.getAllMuscleGroups();
-
+    public ResponseEntity<List<String>> getAllMuscleGroups() {
+        List<String> list = exerciseService.getAllMuscleGroups();
         return ResponseEntity.status(HttpStatus.OK).body(list);
     }
 
     @GetMapping("/muscle-group/{muscleGroup}")
-    public ResponseEntity<List<Exercise>> getExercisesByMuscleGroup(@PathVariable MuscleGroup muscleGroup){
-        List<Exercise> list = exerciseService.getExercisesByMuscleGroup(muscleGroup);
-
+    public ResponseEntity<List<String>> getExercisesByMuscleGroup(@PathVariable MuscleGroup muscleGroup) {
+        List<String> list = exerciseService.getExercisesByMuscleGroup(muscleGroup);
         return ResponseEntity.status(HttpStatus.OK).body(list);
     }
 }
