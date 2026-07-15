@@ -5,16 +5,25 @@
 *.iml
 
 # ==========================
-# Backend (Spring Boot)
+# Maven build output
 # ==========================
-gym-progress-tracker-backend/target/
-gym-progress-tracker-backend/logs/
-gym-progress-tracker-backend/.mvn/wrapper/maven-wrapper.jar
-gym-progress-tracker-backend/.env
-gym-progress-tracker-backend/src/main/resources/application-local.properties
+**/target/
+**/.mvn/wrapper/maven-wrapper.jar
 
+# ==========================
+# All microservice secrets
+# Covers every service regardless of folder name
+# ==========================
+**/src/main/resources/application.properties
+**/src/main/resources/application-local.properties
+**/src/main/resources/application-prod.properties
+**/.env
+
+# ==========================
 # Log files
+# ==========================
 *.log
+**/logs/
 
 # ==========================
 # Frontend (React)
