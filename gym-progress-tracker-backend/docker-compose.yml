@@ -1,0 +1,114 @@
+services:
+
+  # ─────────────────────────────
+  # Redis
+  # ─────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: gym-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - gym-network
+
+  # ─────────────────────────────
+  # Discovery Service - starts first
+  # ─────────────────────────────
+  discovery-service:
+    image: gym-discovery-service
+    container_name: gym-discovery-service
+    ports:
+      - "8761:8761"
+    networks:
+      - gym-network
+
+  # ─────────────────────────────
+  # User Service
+  # ─────────────────────────────
+  user-service:
+    image: gym-user-service
+    container_name: gym-user-service
+    ports:
+      - "8081:8081"
+    environment:
+      - MONGODB_URI=${USER_SERVICE_MONGODB_URI}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRATION=${JWT_EXPIRATION}
+      - EUREKA_SERVER_URL=http://discovery-service:8761/eureka/
+      - EUREKA_INSTANCE_HOSTNAME=user-service
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - discovery-service
+      - redis
+    networks:
+      - gym-network
+
+  # ─────────────────────────────
+  # Workout Service
+  # ─────────────────────────────
+  workout-service:
+    image: gym-workout-service
+    container_name: gym-workout-service
+    ports:
+      - "8082:8082"
+    environment:
+      - MONGODB_URI=${WORKOUT_SERVICE_MONGODB_URI}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRATION=${JWT_EXPIRATION}
+      - EUREKA_SERVER_URL=http://discovery-service:8761/eureka/
+      - EUREKA_INSTANCE_HOSTNAME=workout-service
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - discovery-service
+      - redis
+    networks:
+      - gym-network
+
+  # ─────────────────────────────
+  # Analytics Service
+  # ─────────────────────────────
+  analytics-service:
+    image: gym-analytics-service
+    container_name: gym-analytics-service
+    ports:
+      - "8083:8083"
+    environment:
+      - MONGODB_URI=${ANALYTICS_SERVICE_MONGODB_URI}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRATION=${JWT_EXPIRATION}
+      - EUREKA_SERVER_URL=http://discovery-service:8761/eureka/
+      - EUREKA_INSTANCE_HOSTNAME=analytics-service
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - discovery-service
+      - redis
+    networks:
+      - gym-network
+
+  # ─────────────────────────────
+  # API Gateway - starts last
+  # ─────────────────────────────
+  api-gateway-service:
+    image: gym-api-gateway
+    container_name: gym-api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - EUREKA_SERVER_URL=http://discovery-service:8761/eureka/
+      - EUREKA_INSTANCE_HOSTNAME=api-gateway-service
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
+    depends_on:
+      - discovery-service
+    networks:
+      - gym-network
+
+# ─────────────────────────────
+# All containers on same network
+# so they talk by container name
+# ─────────────────────────────
+networks:
+  gym-network:
+    driver: bridge
